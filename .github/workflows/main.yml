@@ -1,4 +1,4 @@
-name: Build APK Alternatif
+name: Build APK Sukses
 
 on:
   workflow_dispatch:
@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Ambil Kode
+      uses: actions/checkout@v4
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -22,22 +25,40 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Bungkus Web Jadi APK
+    - name: Inisialisasi Aplikasi Webview
       run: |
-        # Membuat folder proyek bersih tanpa gangguan file Cordova lama
-        mkdir build-apk && cd build-apk
+        mkdir -p android-app && cd android-app
         npm init -y
+        # Install Capacitor Core & CLI
+        npm install @capacitor/core @capacitor/cli @capacitor/android
         
-        # Install tools pembungkus webview otomatis
-        npm install -g native-webview || npm install native-webview
+        # Buat konfigurasi otomatis mengarah ke URL webappbuilder kamu
+        cat <<EOF > capacitor.config.json
+        {
+          "appId": "com.appbuilder.id",
+          "appName": "AppBuilder",
+          "webDir": "www",
+          "server": {
+            "url": "https://appbuilderry.vercel.app/",
+            "cleartext": true
+          }
+        }
+        EOF
         
-        # Perintah mutakhir untuk mengubah URL web menjadi file APK Android
-        npx native-webview --url "https://appbuilderry.vercel.app/" --title "AppBuilder" --output "AppBuilder.apk"
+        # Buat folder dummy www agar tidak error saat inisialisasi
+        mkdir www && echo "<html></html>" > www/index.html
+        
+        # Tambahkan platform android ke project
+        npx cap add android
 
-    - name: Upload APK Artifact
+    - name: Kompilasi Menjadi APK
+      run: |
+        cd android-app/android
+        # Jalankan gradle wrapper bawaan android untuk merakit APK
+        ./gradlew assembleDebug
+
+    - name: Upload File APK Kamu
       uses: actions/upload-artifact@v4
       with:
-        name: Hasil-Build-APK
-        path: |
-          build-apk/*.apk
-          *.apk
+        name: Hasil-Build-APK-Sukses
+        path: android-app/android/app/build/outputs/apk/debug/*.apk
