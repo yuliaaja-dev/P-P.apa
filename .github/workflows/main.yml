@@ -1,4 +1,4 @@
-name: Build APK Sukses
+name: Build APK AppBuilderry Real Fixed
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Ambil Kode
+    - name: Checkout Source Code
       uses: actions/checkout@v4
 
     - name: Setup Node.js
@@ -20,45 +20,24 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
-        java-version: '17'
+        java-version: '17' # SDK 34 butuh Java 17
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Inisialisasi Aplikasi Webview
+    - name: Inisialisasi Environment Bersih
       run: |
-        mkdir -p android-app && cd android-app
-        npm init -y
-        # Install Capacitor Core & CLI
-        npm install @capacitor/core @capacitor/cli @capacitor/android
-        
-        # Buat konfigurasi otomatis mengarah ke URL webappbuilder kamu
-        cat <<EOF > capacitor.config.json
-        {
-          "appId": "com.appbuilder.id",
-          "appName": "AppBuilder",
-          "webDir": "www",
-          "server": {
-            "url": "https://appbuilderry.vercel.app/",
-            "cleartext": true
-          }
-        }
-        EOF
-        
-        # Buat folder dummy www agar tidak error saat inisialisasi
-        mkdir www && echo "<html></html>" > www/index.html
-        
-        # Tambahkan platform android ke project
-        npx cap add android
+        npm install -g cordova@13.0.0
+        # Bikin package.json otomatis agar platform bisa masuk
+        echo '{"name": "com.appbuilder.cid.sann", "displayName": "AppBuilder"}' > package.json
 
-    - name: Kompilasi Menjadi APK
+    - name: Jalankan Cordova Build Android
       run: |
-        cd android-app/android
-        # Jalankan gradle wrapper bawaan android untuk merakit APK
-        ./gradlew assembleDebug
+        cordova platform add android@13.0.0 --no-telemetry
+        cordova build android --debug --no-telemetry
 
-    - name: Upload File APK Kamu
+    - name: Ambil File APK
       uses: actions/upload-artifact@v4
       with:
         name: Hasil-Build-APK-Sukses
-        path: android-app/android/app/build/outputs/apk/debug/*.apk
+        path: platforms/android/app/build/outputs/apk/debug/*.apk
