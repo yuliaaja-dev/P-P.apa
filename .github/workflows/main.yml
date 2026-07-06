@@ -8,42 +8,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Ambil source code dari repository kamu
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    # 2. Install Node.js versi stabil terbaru
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
 
-    # 3. Install framework Cordova global
-    - name: Install Cordova
-      run: npm install -g cordova
-
-    # 4. Install Java JDK yang dibutuhkan Android
     - name: Setup Java JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '17'
 
-    # 5. Pasang Android SDK Tool otomatis
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # 6. Proses pembuatan platform Android dan Build ke APK
-    - name: Build Android APK
+    - name: Fix Struktur Cordova (Paksa Inisialisasi)
       run: |
-        cordova platform add android
-        cordova build android --release
+        npm install -g cordova
+        echo '{"name": "com.appbuilder.cid.sann", "displayName": "AppBuilder"}' > package.json
 
-    # 7. Upload hasilnya agar bisa kamu download (Mencari semua file .apk secara otomatis)
+    - name: Proses Build APK
+      run: |
+        cordova platform add android@12.0.0 --no-telemetry
+        cordova build android --debug --no-telemetry
+
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Hasil-Build-APK
         path: |
-          platforms/android/app/build/outputs/apk/release/*.apk
           platforms/android/app/build/outputs/apk/debug/*.apk
