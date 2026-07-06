@@ -1,4 +1,4 @@
-name: Build APK Otomatis
+name: Build APK Alternatif
 
 on:
   workflow_dispatch:
@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Source Code
-      uses: actions/checkout@v4
-
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -25,19 +22,22 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Fix Struktur Cordova (Paksa Inisialisasi)
+    - name: Bungkus Web Jadi APK
       run: |
-        npm install -g cordova
-        echo '{"name": "com.appbuilder.cid.sann", "displayName": "AppBuilder"}' > package.json
-
-    - name: Proses Build APK
-      run: |
-        cordova platform add android@12.0.0 --no-telemetry
-        cordova build android --debug --no-telemetry
+        # Membuat folder proyek bersih tanpa gangguan file Cordova lama
+        mkdir build-apk && cd build-apk
+        npm init -y
+        
+        # Install tools pembungkus webview otomatis
+        npm install -g native-webview || npm install native-webview
+        
+        # Perintah mutakhir untuk mengubah URL web menjadi file APK Android
+        npx native-webview --url "https://appbuilderry.vercel.app/" --title "AppBuilder" --output "AppBuilder.apk"
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Hasil-Build-APK
         path: |
-          platforms/android/app/build/outputs/apk/debug/*.apk
+          build-apk/*.apk
+          *.apk
